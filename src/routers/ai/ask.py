@@ -39,6 +39,7 @@ from ...services.ai import (
     stream_chat_completion,
 )
 from ...services.ai.provider_client import EmbeddingNotConfiguredError
+from ...services.ai.provider_client import EmbeddingProviderError
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -98,6 +99,11 @@ async def ask(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={"error_code": "AI_EMBEDDING_UNAVAILABLE", "message": str(exc)},
+        )
+    except EmbeddingProviderError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={"error_code": "AI_PROVIDER_ERROR", "message": str(exc)},
         )
 
     # 4. 检索 top-K

@@ -9,8 +9,8 @@
     "CORS_ORIGINS": "https://beecount.example.com",
     "BOOTSTRAP_ADMIN_EMAIL": "owner@example.com",
     "TZ": "Asia/Shanghai",
-    "EMBEDDING_BASE_URL": "",
-    "EMBEDDING_MODEL": ""
+    "EMBEDDING_BASE_URL": "https://api.siliconflow.cn/v1",
+    "EMBEDDING_MODEL": "BAAI/bge-m3"
   },
   "containers": [
     {

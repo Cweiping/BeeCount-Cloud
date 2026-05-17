@@ -218,6 +218,14 @@ Key points:
 
 - BeeCount Cloud runs inside Cloudflare Containers
 - `/data` is mounted from an R2 bucket through `tigrisfs`
+- The template already ships safe defaults for `EMBEDDING_BASE_URL` and `EMBEDDING_MODEL`; do not replace them with empty strings
+
+AI validation notes:
+
+- For `sub2api`, BeeCount should use `https://sub2api.aisbti.com/v1`
+- `gpt-5.4` was validated for both text and vision
+- That gateway did not expose embeddings or `/audio/transcriptions`, so doc Q&A and server-side speech require another provider
+- Web voice input itself uses the browser Web Speech API rather than BeeCount server-side transcription
 - all sensitive values are injected locally with `wrangler versions secret put`, never committed to git
 - after sleep or first deploy, it is recommended to warm the instance once via ` /__cf/start `
 

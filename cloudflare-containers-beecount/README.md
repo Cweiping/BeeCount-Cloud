@@ -56,6 +56,8 @@ Optional if you want AI doc Q&A:
 npx wrangler versions secret put EMBEDDING_API_KEY
 ```
 
+Keep the template `EMBEDDING_BASE_URL` and `EMBEDDING_MODEL` values as-is unless you are rebuilding the docs index with another embedding model. Empty strings will override the app defaults and break `/api/v1/ai/ask`.
+
 ## Deploy
 
 ```bash
@@ -80,3 +82,5 @@ curl https://your-worker.workers.dev/api/v1/version
 - Transaction create/read succeeded
 - MCP SSE handshake succeeded
 - WebSocket ping/pong succeeded
+- `sub2api` provider worked for text and vision after using `https://sub2api.aisbti.com/v1`
+- `sub2api` did not provide embeddings or `/audio/transcriptions`, so doc Q&A and server-side speech need another provider

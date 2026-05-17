@@ -48,6 +48,8 @@ Optional:
 npx wrangler versions secret put EMBEDDING_API_KEY
 ```
 
+`EMBEDDING_BASE_URL` and `EMBEDDING_MODEL` should stay aligned with the bundled docs index. The template defaults are already set to `https://api.siliconflow.cn/v1` and `BAAI/bge-m3`; do not replace them with empty strings.
+
 ## Required config
 
 Edit `cloudflare-containers-beecount/wrangler.jsonc` and replace:
@@ -90,6 +92,14 @@ Functional checks:
 4. Read it back from `/api/v1/read/ledgers/{ledger_id}/transactions`.
 5. Create an MCP PAT and verify `/api/v1/mcp/sse`.
 6. Connect to `/ws` and verify ping/pong.
+
+AI-specific notes from live validation:
+
+- `https://sub2api.aisbti.com/v1` with `gpt-5.4` works for text chat provider tests.
+- The same provider also works for vision/image tests when `visionModel=gpt-5.4`.
+- That provider does not expose `/v1/embeddings`, so it cannot power `/api/v1/ai/ask` doc Q&A by itself.
+- That provider also does not expose `/v1/audio/transcriptions`, so server-side speech capability tests require a different provider/model.
+- Web voice input in the browser is separate: it uses the browser Web Speech API and does not send audio through BeeCount Cloud.
 
 ## Known tradeoffs
 

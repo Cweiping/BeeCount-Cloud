@@ -218,6 +218,14 @@ services:
 - BeeCount 主容器跑在 Cloudflare Containers
 - `/data` 通过 `tigrisfs` 挂载到 R2 bucket
 - 所有敏感值都通过 `wrangler versions secret put` 本地注入，不进 git
+- 模板里的 `EMBEDDING_BASE_URL` / `EMBEDDING_MODEL` 已预填安全默认值，不要改成空字符串
+
+AI 调试备注：
+
+- `sub2api` 这类 OpenAI 兼容网关在 BeeCount 里要填 `https://sub2api.aisbti.com/v1`
+- `gpt-5.4` 已验证可用于文本和视觉识别
+- 这条网关未提供 embeddings 和 `/audio/transcriptions`，所以文档问答和服务端语音测试需要额外 provider
+- Web 端语音输入本身走浏览器 Web Speech API，不经过 BeeCount 服务端
 - 首次或休眠后恢复时，建议先请求一次 ` /__cf/start ` 预热
 
 必须本地注入的 secret：

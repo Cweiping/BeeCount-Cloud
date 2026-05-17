@@ -43,6 +43,10 @@ class EmbeddingNotConfiguredError(RuntimeError):
     """Server 没配 EMBEDDING_API_KEY — A1 endpoint 直接 503,管理员必须配。"""
 
 
+class EmbeddingProviderError(RuntimeError):
+    """Embedding provider 连通但调用失败(鉴权/网络/超时/上游 5xx)。"""
+
+
 async def embed_query(query: str) -> list[float]:
     """server-side 把用户问题 embed 成向量。用 server 持有的 key,不消耗用户配额。
 
@@ -54,17 +58,37 @@ async def embed_query(query: str) -> list[float]:
         raise EmbeddingNotConfiguredError(
             "EMBEDDING_API_KEY 未配置;请在 .env 文件或环境变量设置 SiliconFlow / OpenAI key"
         )
-    async with httpx.AsyncClient(
-        timeout=settings.embedding_timeout,
-        verify=settings.ai_http_verify_ssl,
-    ) as client:
-        resp = await client.post(
-            f"{settings.embedding_base_url.rstrip('/')}/embeddings",
-            headers={"Authorization": f"Bearer {settings.embedding_api_key}"},
-            json={"model": settings.embedding_model, "input": query},
+    if not settings.embedding_base_url:
+        raise EmbeddingNotConfiguredError(
+            "EMBEDDING_BASE_URL 未配置;请设置兼容 OpenAI embeddings 的 base URL"
         )
+    if not settings.embedding_model:
+        raise EmbeddingNotConfiguredError(
+            "EMBEDDING_MODEL 未配置;请设置与 docs index 一致的 embedding model"
+        )
+    try:
+        async with httpx.AsyncClient(
+            timeout=settings.embedding_timeout,
+            verify=settings.ai_http_verify_ssl,
+        ) as client:
+            resp = await client.post(
+                f"{settings.embedding_base_url.rstrip('/')}/embeddings",
+                headers={"Authorization": f"Bearer {settings.embedding_api_key}"},
+                json={"model": settings.embedding_model, "input": query},
+            )
         resp.raise_for_status()
         data = resp.json()
+    except httpx.TimeoutException as exc:
+        raise EmbeddingProviderError(
+            f"embedding provider timed out after {settings.embedding_timeout:.1f}s"
+        ) from exc
+    except httpx.HTTPStatusError as exc:
+        body = exc.response.text[:200] if exc.response is not None else ""
+        raise EmbeddingProviderError(
+            f"embedding provider returned {exc.response.status_code}: {body}"
+        ) from exc
+    except httpx.HTTPError as exc:
+        raise EmbeddingProviderError(f"embedding provider network error: {exc}") from exc
     embedding = data["data"][0]["embedding"]
     if not isinstance(embedding, list):
         raise RuntimeError("embedding API 返回 shape 异常")

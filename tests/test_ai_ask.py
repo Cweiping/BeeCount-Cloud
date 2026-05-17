@@ -259,6 +259,84 @@ def test_ask_embedding_unconfigured_returns_503(fake_index_dir, monkeypatch):
         app.dependency_overrides.clear()
 
 
+def test_ask_embedding_blank_base_url_returns_503(fake_index_dir, monkeypatch):
+    """EMBEDDING_BASE_URL 被空字符串覆盖时,不应再冒 500。"""
+    _make_fake_index(fake_index_dir)
+    from src.config import get_settings
+    settings = get_settings()
+    monkeypatch.setattr(settings, "embedding_api_key", "fake-server-key")
+    monkeypatch.setattr(settings, "embedding_base_url", "")
+    monkeypatch.setattr(settings, "embedding_model", "BAAI/bge-m3")
+
+    client = _make_client()
+    try:
+        token, user_id = _register_and_token(client)
+        from src.database import get_db
+        db = next(app.dependency_overrides[get_db]())
+        db.add(UserProfile(
+            user_id=user_id,
+            ai_config_json=json.dumps({
+                "providers": [{
+                    "id": "zhipu_glm", "apiKey": "sk-x", "baseUrl": "https://x",
+                    "textModel": "glm-4-flash",
+                }],
+                "binding": {"textProviderId": "zhipu_glm"},
+            }),
+        ))
+        db.commit()
+        db.close()
+        r = client.post(
+            "/api/v1/ai/ask",
+            json={"query": "怎么开 2FA"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert r.status_code == 503
+        body = r.json()
+        assert body["error_code"] == "AI_EMBEDDING_UNAVAILABLE", body
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_ask_embedding_provider_error_returns_502(fake_index_dir, monkeypatch):
+    """embedding provider 上游报错时,接口应返回可预期 502。"""
+    _make_fake_index(fake_index_dir)
+    from src.services.ai.provider_client import EmbeddingProviderError
+
+    async def fake_embed(_query):
+        raise EmbeddingProviderError("embedding provider returned 401: invalid api key")
+
+    monkeypatch.setattr("src.routers.ai.ask.embed_query", fake_embed)
+
+    client = _make_client()
+    try:
+        token, user_id = _register_and_token(client)
+        from src.database import get_db
+        db = next(app.dependency_overrides[get_db]())
+        db.add(UserProfile(
+            user_id=user_id,
+            ai_config_json=json.dumps({
+                "providers": [{
+                    "id": "zhipu_glm", "apiKey": "sk-x", "baseUrl": "https://x",
+                    "textModel": "glm-4-flash",
+                }],
+                "binding": {"textProviderId": "zhipu_glm"},
+            }),
+        ))
+        db.commit()
+        db.close()
+        r = client.post(
+            "/api/v1/ai/ask",
+            json={"query": "怎么开 2FA"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert r.status_code == 502
+        body = r.json()
+        assert body["error_code"] == "AI_PROVIDER_ERROR", body
+        assert "401" in body["detail"]
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_ask_happy_path_streams_chunks_and_sources(fake_index_dir, monkeypatch):
     """配齐 + index + provider + embedding 都 mock,验证 SSE event 序列。"""
     _make_fake_index(fake_index_dir, chunks_count=3)
