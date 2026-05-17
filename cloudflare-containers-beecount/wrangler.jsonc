@@ -1,0 +1,40 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "beecount-cloud-cf",
+  "main": "src/index.js",
+  "compatibility_date": "2026-05-17",
+  "vars": {
+    "R2_BUCKET_NAME": "your-beecount-data-bucket",
+    "R2_ACCOUNT_ID": "your-cloudflare-account-id",
+    "CORS_ORIGINS": "https://beecount.example.com",
+    "BOOTSTRAP_ADMIN_EMAIL": "owner@example.com",
+    "TZ": "Asia/Shanghai",
+    "EMBEDDING_BASE_URL": "",
+    "EMBEDDING_MODEL": ""
+  },
+  "containers": [
+    {
+      "name": "beecount-cloud-cf",
+      "class_name": "BeeCountCloud",
+      "image": "docker.io/sunxiao0721/beecount-cloud@sha256:fb5d68c600f2601c4cc64ce6bd31b981d02ff99bc8726158f52b437f1746ad5c",
+      "max_instances": 1,
+      "instance_type": "basic"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "BEECOUNT_APP",
+        "class_name": "BeeCountCloud"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "BeeCountCloud"
+      ]
+    }
+  ]
+}

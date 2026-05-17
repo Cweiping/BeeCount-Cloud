@@ -204,6 +204,44 @@ services:
 
 Front with nginx / caddy for HTTPS + domain. App and Web both support `https://` URLs.
 
+### 7) Cloudflare Containers Deployment
+
+This repo also includes an **experimental** Cloudflare Containers template. See [cloudflare-containers-beecount](./cloudflare-containers-beecount/README.md) and [docs/CLOUDFLARE_CONTAINERS.md](./docs/CLOUDFLARE_CONTAINERS.md).
+
+Use it when you specifically want:
+
+- BeeCount Cloud running on Cloudflare Containers
+- `/data` persisted through an R2-backed mount
+- a Cloudflare-native deployment path and you can tolerate slower cold starts than Docker Compose
+
+Key points:
+
+- BeeCount Cloud runs inside Cloudflare Containers
+- `/data` is mounted from an R2 bucket through `tigrisfs`
+- all sensitive values are injected locally with `wrangler versions secret put`, never committed to git
+- after sleep or first deploy, it is recommended to warm the instance once via ` /__cf/start `
+
+Secrets that must be injected locally:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `BOOTSTRAP_ADMIN_PASSWORD`
+- optional: `EMBEDDING_API_KEY`
+
+Validated baseline functionality:
+
+- `/healthz` / `/ready`
+- web login
+- ledger create / transaction create / read-back
+- MCP SSE handshake
+- WebSocket ping/pong
+
+Current conclusion:
+
+- the Cloudflare path is functionally workable
+- Docker Compose is still the default production recommendation
+- treat the Cloudflare variant as an experimental or light-workload deployment until you are comfortable with its cold-start and persistence tradeoffs
+
 ---
 
 ## 🗄️ Database Migrations

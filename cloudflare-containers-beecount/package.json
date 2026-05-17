@@ -1,0 +1,17 @@
+{
+  "name": "cloudflare-containers-beecount",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "secret:aws-key-id": "wrangler versions secret put AWS_ACCESS_KEY_ID",
+    "secret:aws-secret": "wrangler versions secret put AWS_SECRET_ACCESS_KEY",
+    "secret:bootstrap-password": "wrangler versions secret put BOOTSTRAP_ADMIN_PASSWORD"
+  },
+  "dependencies": {
+    "@cloudflare/containers": "0.3.4"
+  },
+  "devDependencies": {
+    "wrangler": "4.92.0"
+  }
+}

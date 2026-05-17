@@ -7,6 +7,12 @@ __pycache__/
 *.pyc
 .mypy_cache/
 .ruff_cache/
+.wrangler/
+cloudflare-containers-*/.wrangler/
+cloudflare-containers-*/.dev.vars
+cloudflare-containers-*/.dev.vars.*
+cloudflare-containers-*/secrets/
+cloudflare-containers-r2-poc/
 
 frontend/node_modules/
 frontend/apps/web/node_modules/

@@ -203,6 +203,44 @@ services:
 
 建议在前面套一层 nginx / caddy 做 HTTPS + 域名。App 和 Web 都支持 `https://` 地址。
 
+### 7) Cloudflare Containers 部署
+
+仓库提供了一套**实验性** Cloudflare Containers 模板，见 [cloudflare-containers-beecount](./cloudflare-containers-beecount/README.md) 和 [docs/CLOUDFLARE_CONTAINERS.md](./docs/CLOUDFLARE_CONTAINERS.md)。
+
+适用场景：
+
+- 想直接跑在 Cloudflare Containers
+- 想把 BeeCount Cloud 的 `/data` 持久层挂到 R2
+- 能接受比 Docker Compose 更慢的冷启动
+
+部署要点：
+
+- BeeCount 主容器跑在 Cloudflare Containers
+- `/data` 通过 `tigrisfs` 挂载到 R2 bucket
+- 所有敏感值都通过 `wrangler versions secret put` 本地注入，不进 git
+- 首次或休眠后恢复时，建议先请求一次 ` /__cf/start ` 预热
+
+必须本地注入的 secret：
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `BOOTSTRAP_ADMIN_PASSWORD`
+- 可选：`EMBEDDING_API_KEY`
+
+已验证的基础能力：
+
+- `/healthz` / `/ready`
+- Web 登录
+- 账本创建 / 交易创建 / 读回
+- MCP SSE 握手
+- WebSocket ping/pong
+
+当前结论：
+
+- 这条 Cloudflare 路径是**可运行**的
+- 但仍建议把 Docker Compose 视为默认生产方案
+- Cloudflare 版本更适合实验、轻负载或进一步收敛优化后再正式使用
+
 ---
 
 ## 🗄️ 数据库迁移
